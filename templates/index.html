@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Bot Control</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .container {
+            margin-top: 50px;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 20%;
+            transform: translate(-50%, -20%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .group-input {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Telegram Bot Control</h2>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <h3>Login</h3>
+            <form id="loginControlForm">
+                <div class="form-group">
+                    <label for="loginUserId">Telegram User ID</label>
+                    <input type="text" class="form-control" id="loginUserId" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" class="form-control" id="loginPassword" required>
+                </div>
+                <button type="button" class="btn btn-primary" id="loginButton">Login</button>
+                <button type="button" class="btn btn-secondary" id="showRegisterForm">Register</button>
+            </form>
+        </div>
+
+        <!-- Registration Form -->
+        <div id="registerForm" style="display:none;">
+            <h3>Register</h3>
+            <form id="registerControlForm">
+                <div class="form-group">
+                    <label for="registerUserId">Telegram User ID</label>
+                    <input type="text" class="form-control" id="registerUserId" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" class="form-control" id="registerPassword" required>
+                </div>
+                <button type="button" class="btn btn-primary" id="registerButton">Register</button>
+                <button type="button" class="btn btn-secondary" id="showLoginForm">Back to Login</button>
+            </form>
+        </div>
+
+        <!-- Bot Control Form -->
+        <div id="botControlForm" style="display:none;">
+            <form id="botControlForm">
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea class="form-control" id="message" required></textarea>
+                </div>
+                <div class="form-group" id="groupContainer">
+                    <label>Group IDs</label>
+                    <div class="input-group group-input">
+                        <input type="text" class="form-control group-id" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" id="addGroupButton">Add Group</button>
+                <div class="form-group">
+                    <label for="start_time">Start Time</label>
+                    <input type="time" class="form-control" id="start_time" required>
+                </div>
+                <div class="form-group">
+                    <label for="end_time">End Time</label>
+                    <input type="time" class="form-control" id="end_time" required>
+                </div>
+                <div class="form-group">
+                    <label for="time_zone">Time Zone</label>
+                    <select class="form-control" id="time_zone">
+                        <!-- Comprehensive list of time zones -->
+                        <option value="GMT" selected>GMT</option>
+                        <option value="UTC">UTC</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="America/Chicago">America/Chicago</option>
+                        <option value="America/Denver">America/Denver</option>
+                        <option value="Asia/Shanghai">Asia/Shanghai</option>
+                        <option value="Asia/Singapore">Asia/Singapore</option>
+                        <!-- Add more time zones as needed -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="delay">Delay between messages (seconds)</label>
+                    <input type="number" class="form-control" id="delay" required>
+                </div>
+                <div class="form-group">
+                    <label for="restrict_permissions">Restrict User Permissions</label>
+                    <select class="form-control" id="restrict_permissions">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="disable_web_page_preview">Disable Link Preview</label>
+                    <select class="form-control" id="disable_web_page_preview">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="pin_first_message">Pin First Message</label>
+                    <select class="form-control" id="pin_first_message">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" id="startButton">Start</button>
+                <button type="button" class="btn btn-danger" id="stopButton">Stop</button>
+                <button type="button" class="btn btn-info" id="restoreButton">Restore Permissions</button>
+            </form>
+        </div>
+
+        <div id="popup" class="popup">
+            <p id="popupMessage"></p>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Show registration form
+            $('#showRegisterForm').click(function() {
+                $('#loginForm').hide();
+                $('#registerForm').show();
+            });
+
+            // Show login form
+            $('#showLoginForm').click(function() {
+                $('#registerForm').hide();
+                $('#loginForm').show();
+            });
+
+            // Handle registration
+            $('#registerButton').click(function() {
+                const userId = $('#registerUserId').val();
+                const password = $('#registerPassword').val();
+
+                $.ajax({
+                    url: '/register',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, password }),
+                    success: function(response) {
+                        showPopup(response.status);
+                        if (response.status === 'User already registered') {
+                            if (confirm('User already registered. Do you want to reset your password?')) {
+                                sendResetCode(userId);
+                            }
+                        } else if (response.status === 'Verification code sent') {
+                            const code = prompt('Enter the verification code sent to your Telegram');
+                            if (code) {
+                                verifyCode(userId, code, password);
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Handle login
+            $('#loginButton').click(function() {
+                const userId = $('#loginUserId').val();
+                const password = $('#loginPassword').val();
+
+                $.ajax({
+                    url: '/login',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, password }),
+                    success: function(response) {
+                        showPopup(response.status);
+                        if (response.status === 'Login successful') {
+                            $('#loginForm').hide();
+                            $('#botControlForm').show();
+                        }
+                    }
+                });
+            });
+
+            // Send reset code
+            function sendResetCode(userId) {
+                $.ajax({
+                    url: '/reset_password',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId }),
+                    success: function(response) {
+                        showPopup(response.status);
+                        if (response.status === 'Reset code sent') {
+                            const code = prompt('Enter the reset code sent to your Telegram');
+                            if (code) {
+                                const newPassword = prompt('Enter your new password');
+                                if (newPassword) {
+                                    resetPassword(userId, code, newPassword);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Verify code and reset password
+            function resetPassword(userId, code, newPassword) {
+                $.ajax({
+                    url: '/confirm_reset',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, code, new_password: newPassword }),
+                    success: function(response) {
+                        showPopup(response.status);
+                        if (response.status === 'Password reset successful') {
+                            $('#registerForm').hide();
+                            $('#loginForm').show();
+                        }
+                    }
+                });
+            }
+
+            function verifyCode(userId, code, password) {
+                $.ajax({
+                    url: '/verify_code',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, code, password }),
+                    success: function(response) {
+                        showPopup(response.status);
+                        if (response.status === 'Registration successful') {
+                            $('#registerForm').hide();
+                            $('#loginForm').show();
+                        }
+                    }
+                });
+            }
+
+            function showPopup(message) {
+                $('#popupMessage').text(message);
+                $('#popup').fadeIn().delay(2000).fadeOut();
+            }
+
+            // Handle adding more group inputs
+            $('#addGroupButton').click(function() {
+                $('#groupContainer').append('<div class="input-group group-input"><input type="text" class="form-control group-id" required></div>');
+            });
+        });
+    </script>
+</body>
+</html>
